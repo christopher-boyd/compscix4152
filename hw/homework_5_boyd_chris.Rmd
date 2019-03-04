@@ -1,0 +1,172 @@
+---
+title: "COMPSCIX 415.2 Homework 5"
+author: "Chris Boyd"
+date: "2/26/2019"
+output:
+  html_document:
+    self_contained: true
+---
+
+```{r message=FALSE, warning=FALSE}
+library(mdsr)
+library(dplyr)
+library(tidyverse)
+```
+
+# Table of Contents
+
+1. Tidyverse packages
+2. R Basics
+3. Data Import / Export
+4. Visualization
+5. Data munging and wrangling
+6. EDA
+7. Git and Github
+
+# Section 1: The tidyverse packages
+
+> Can you name which package is associated with each task below?
+
+* Plotting: **ggplot2**
+* Data munging/wrangling: **dplyr**
+* Reshaping (speading and gathering) data: **tidry**
+* Importing/exporting data: **readr**
+
+> Now can you name two functions that you’ve used from each package that you listed above for these tasks?
+
+* Plotting - ggplot2: **geom_point()** and **aes()**
+* Data munging/wrangling: dplyr: **filter()** and **summarise()**
+* Reshaping (speading and gathering) data - tidry: **gather()** and **spread()**
+* Importing/exporting data - readr: **read_csv()** and **write_delim()**
+
+# Section 2: R Basics
+
+> Fix this code with the fewest number of changes possible so it works:
+
+> 1. My_data.name___is.too00ooLong! <- c( 1 , 2   , 3 )
+
+```{r}
+# corrected with fewest possible changes:
+My_data.name___is.too00ooLong <- c( 1 , 2   , 3 )
+My_data.name___is.too00ooLong
+
+# corrected with a few more changes:
+my_data <- c( 1 , 2   , 3 )
+my_data
+
+```
+
+> 2. my_string <- C('has', 'an', 'error', 'in', 'it)
+
+```{r}
+# corrected with fewest possible changes:
+my_string <- c('has', 'an', 'error', 'in', 'it')
+
+```
+
+> 3. Look at the code below and comment on what happened to the values in the vector.
+
+```{r}
+my_vector <- c(1, 2, '3', '4', 5)
+my_vector
+typeof(my_vector)
+```
+
+Wrapping the 3 and 4 in the single quote cast each element in the vector to a 'character' datatype.
+
+
+# Section 3: Data import/export 
+
+> 1. Download the rail_trail.txt file from Canvas (in the Midterm Exam section) and successfully import it into R. Prove that it was imported successfully by including your import code and taking a glimpse of the result.
+
+```{r}
+import_file_path = "../data/rail_trail.txt"
+rail_trail <- read.csv(import_file_path, sep ="|", header = TRUE)
+glimpse(rail_trail)
+```
+
+> 2. Export the file into a comma-separated file and name it “rail_trail.csv”. Make sure you define the path correctly so that you know where it gets saved. Then reload the file. Include your export and import code and take another glimpse.
+
+```{r}
+export_file_path = "../data/rail_trail.csv"
+
+write.csv(rail_trail, file = export_file_path, row.names=FALSE)
+
+import_file_path_csv = "../data/rail_trail.csv"
+rail_trail_csv <- read_csv(import_file_path_csv, col_names = TRUE)
+glimpse(rail_trail_csv)
+
+```
+
+# Section 4: Visualization
+
+> Critique this graphic: give only three examples of what is wrong with this graphic. Be concise.
+
+* The segments overlap.   Each 'Men/Women' segment is composed of each 'Age' segemnt.   A grouping function would help.
+* The populations sizes aren't indicated.   Would be nice to know how big each group is.
+* Color scheme is weird.  Age is all black, while gender uses a color gradient.
+
+
+
+> Reproduce this graphic using the diamonds data set.
+
+```{r}
+ggplot(data = diamonds) +
+  geom_boxplot(position="identity", aes(x = cut, y=carat, fill=color)) +
+  coord_flip() + 
+  xlab("CARAT OF DIAMOND") +
+  ylab("CUT OF DIAMOND")
+```
+
+The easiest way to make this more readable is to omit the 'position="identity"' argument.
+```{r}
+ggplot(data = diamonds) +
+  geom_boxplot(aes(x = cut, y=carat, fill=color)) +
+  coord_flip() + 
+  xlab("CARAT OF DIAMOND") +
+  ylab("CUT OF DIAMOND")
+```
+
+Another way is to add a facet_wrap.   I think the plot above is more readable, however.
+
+```{r}
+ggplot(data = diamonds) +
+  geom_boxplot(aes(x = cut, y=carat, fill=color)) +
+  coord_flip() + 
+  facet_wrap(~ color) +
+  xlab("CARAT OF DIAMOND") +
+  ylab("CUT OF DIAMOND")
+```
+
+# Section 5: Data munging and wrangling
+
+> Is this data “tidy”? If yes, leave it alone and go to the next problem. If no, make it tidy. Note: this data set is called table2 and is available in the tidyverse package. It should be ready for you to use after you’ve loaded the tidyverse package.
+
+No.   Type and count should be spread to make it tidy data.
+
+```{r}
+table2 %>%
+  spread(key = type, value = count)
+```
+
+> Create a new column in the diamonds data set called price_per_carat that shows the price of each diamond per carat (hint: divide). Only show me the code, not the output.
+
+```{r}
+new_diamonds = mutate(diamonds, price_per_carat = price / carat)
+```
+
+> For each cut of diamond in the diamonds data set, how many diamonds, and what proportion, have a price > 10000 and a carat < 1.5? There are several ways to get to an answer, but your solution must use the data wrangling verbs from the tidyverse in order to get credit.
+
+```{r}
+diamonds %>%
+    group_by(cut) %>%
+      summarise(
+        total = n(),
+        total_count = count(price > 10000 & carat < 1.5),
+        proportion  = total_count / total 
+      )
+      
+
+```
+
+# EDA
