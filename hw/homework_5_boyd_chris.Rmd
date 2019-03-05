@@ -12,6 +12,8 @@ library(mdsr)
 library(dplyr)
 library(tidyverse)
 ```
+# Github link
+[COMPSCIX 415.2 Homework 5](https://github.com/christopher-boyd/compscix4152/tree/master/hw)
 
 # Table of Contents
 
@@ -170,3 +172,62 @@ diamonds %>%
 ```
 
 # EDA
+> Take a look at the txhousing data set that is included with the ggplot2 package and answer these questions:
+
+> 1. During what time period is this data from?
+
+```{r}
+first_date = filter(txhousing, date == min(txhousing$date)) %>% slice(1:1)
+last_date = filter(txhousing, date == max(txhousing$date)) %>% slice(1:1)
+
+#start_date
+paste(first_date$month, first_date$year, sep='/') 
+#end_date
+paste(last_date$month, last_date$year, sep='/') 
+
+
+```
+Range is 1/2000 - 7/2015.
+
+> 2. How many cities are represented?
+
+```{r}
+txhousing %>%
+  group_by(city) %>%
+    summarise %>%
+      count()
+```
+There are 46 unique cities.
+
+> 3. Which city, month and year had the highest number of sales?
+
+```{r}
+txhousing %>%
+  group_by(city, year, month) %>%
+    summarise(
+      max_sales = max(sales)
+    ) %>%
+  arrange(desc(max_sales))
+
+```
+Houston July 2015 had the most sales.
+
+> What kind of relationship do you think exists between the number of listings and the number of sales? Check your assumption and show your work.
+
+As listings increase, so should sales and vice versa.
+
+```{r}
+txhousing %>%
+  group_by(date) %>%
+    summarise (
+      count_sales = sum(sales, na.rm=TRUE),
+      count_listings = sum(listings, na.rm=TRUE)
+    ) %>%
+
+ggplot(aes(x = date, y=count_listings)) +
+  geom_point(aes(colour = count_sales))
+```
+
+> What proportion of sales is missing for each city?
+
+# Git and Github
