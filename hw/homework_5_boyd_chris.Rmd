@@ -230,4 +230,55 @@ ggplot(aes(x = date, y=count_listings)) +
 
 > What proportion of sales is missing for each city?
 
+```{r}
+txhousing %>%
+  group_by(city) %>%
+    summarise(
+      count = n(),
+      missing = count(is.na(sales)),
+      prop_missing = missing / count
+    )
+
+```
+
+> Looking at only the cities and months with greater than 500 sales:
+
+>Are the distributions of the median sales price (column name median), when grouped by city, different? The same? Show your work.
+
+```{r}
+txhousing %>%
+    filter(sales > 500) %>%
+      group_by(city) %>%
+          ggplot +
+            geom_boxplot(aes(x = city, y = median)) +
+            coord_flip() 
+
+txhousing %>%
+    filter(sales > 500) %>%
+      group_by(date()) %>%
+          ggplot +
+            geom_boxplot(aes(x = city, y = median)) +
+            coord_flip() 
+
+
+txhousing %>%
+    filter(sales > 500) %>%
+          ggplot +
+            geom_boxplot(aes(x = city, y = median)) +
+            coord_flip() 
+```
+
+The distributions are the same whether grouping or not.
+
+>Any cities that stand out that you’d want to investigate further?
+
+I'd look at Fort Bend and Austin, so have larger IQRs than the others, as well as a longer tail.
+
+
+>Why might we want to filter out all cities and months with sales less than 500?
+
+The fewer the sales, the less meaningful the median sales price.
+
 # Git and Github
+
+[COMPSCIX 415.2 Homework 5](https://github.com/christopher-boyd/compscix4152/tree/master/hw)
