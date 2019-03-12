@@ -1,0 +1,170 @@
+---
+title: "Homework 6"
+author: "Chris Boyd"
+date: "3/9/2019"
+output:
+  html_document:
+    self_contained: true
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(dplyr)
+library(mosaicData)
+```
+
+# Exercise 1
+
+> What variables are in this data set?
+
+The variables are: outcome, smoker, age
+
+> How many observations are there and what does each represent?
+
+There are 1,314 observations.  Each observation represents a woman who has been classified as a smoker or non-smoker, with a status of dead or alive 20 years after the original survey.
+
+> Create a table (use the R code below as a guide) and a visualization of the relationship between smoking status and outcome, ignoring age. What do you see? Does it make sense?
+
+```{r}
+Whickham %>% 
+  count(outcome, smoker) 
+```
+```{r}
+Whickham %>% 
+  ggplot() +
+    geom_bar(mapping = aes(x=outcome, fill=smoker))
+
+```
+
+The data doesnt make sense.   It looks like there are more dead non-smokers than dead smokers.   I would expect the inverse.   Same goes for alive smokers/non-smokers.
+
+> Recode the age variable into an ordered factor with three categories: age <= 44, age > 44 & age <= 64, and age > 64. Now, recreate visualization from above, but facet on your new age factor. What do you see? Does it make sense?
+
+```{r}
+Whickham <- Whickham %>% 
+  mutate(age_fct = case_when(age >= 0 & age < 40 ~ '< 40',
+                               age >= 40 & age < 60 ~ 'between 40 and 60',
+                               age >= 60 ~ '> 60'))
+Whickham <- Whickham %>% mutate(age_fct = factor(age_fct, ordered=TRUE))
+Whickham <- Whickham %>% mutate(age_fct = fct_relevel(age_fct, '< 40', 'between 40 and 60', '>60'))
+
+Whickham %>% 
+  ggplot() +
+    geom_bar(mapping = aes(x=outcome, fill=smoker)) +
+    facet_wrap(~ age_fct)
+
+```
+
+This makes more sense.   Here I see that the older you get, the more likely you are to be dead if you were a smoker.    There is a slight difference (favoring dead) between dead/alive in the largest "<40" segment, which has a huge impact on the overall percentage of "deads."
+
+# Exercise 2
+
+>The Central Limit Theorem states that the sampling distribution of sample means is approximately Normal, regardless of the distribution of your population. For this exercise our population distribution will be a Gamma(1,2) distribution, and we’ll show that the sampling distribution of the mean is in fact normally distributed.
+
+>Generate a random sample of size n = 10000 from a gamma(1,2) distribution and plot a histogram or density curve. Use the code below to help you get your sample.
+
+```{r}
+n <- 10000
+
+gamma_samp <- tibble(x = rgamma(n, shape = 1, scale = 2)) 
+
+gamma_samp %>%
+  summarise(
+    mean(x, na.rm=TRUE),
+    sd(x, na.rm=TRUE)
+  )
+
+ 
+
+```
+
+> Pretend the distribution of our population of data looks like the plot above. Now take a sample of size n = 30 from a Gamma(1,2) distribution, plot the histogram or density curve, and calculate the mean and standard deviation.
+
+```{r}
+
+sample_size <- 30
+gamma_samp <- tibble(x = rgamma(sample_size, shape = 1, scale = 2))
+
+
+gamma_samp %>% 
+  ggplot() +
+    geom_histogram(aes(x = x)) +
+    geom_vline(aes(xintercept=mean(x)),
+            color="blue", linetype="dashed", size=1) + 
+    geom_vline(aes(xintercept=sd(x)),
+            color="red", linetype="dashed", size=1)  
+
+  
+```
+
+> Take a sample of size n = 30, again from the Gamma(1,2) distribution, calculate the mean, and assign it to a vector named mean_samp. Repeat this 10000 times!!!! The code below might help.
+
+```{r}
+
+sample_size <- 30
+mean_samp <- rep(NA, 10000)
+
+# start a loop
+for(i in 1:10000) {
+  g_samp <- rgamma(sample_size, shape = 1, scale = 2)
+  mean_samp[i] <- mean(g_samp)
+}
+
+# Convert vector to a tibble
+mean_samp <- tibble(mean_samp)
+
+mean_samp %>%
+  summarise(
+    mean=mean(mean_samp),
+    sd=sd(mean_samp)
+  )
+
+mean_samp %>% 
+  ggplot() +
+    geom_histogram(aes(x = mean_samp)) +
+    geom_vline(aes(xintercept=mean(mean_samp)),
+            color="blue", linetype="dashed", size=1) + 
+    geom_vline(aes(xintercept=sd(mean_samp)),
+            color="red", linetype="dashed", size=1)  
+
+
+  
+```
+> Did anything surprise you about your answers to #6?
+
+I'm suprised the SD is so small.
+
+
+```{r}
+
+sample_size <- 300
+mean_samp <- rep(NA, 10000)
+
+# start a loop
+for(i in 1:10000) {
+  g_samp <- rgamma(sample_size, shape = 1, scale = 2)
+  mean_samp[i] <- mean(g_samp)
+}
+
+# Convert vector to a tibble
+mean_samp <- tibble(mean_samp)
+
+mean_samp %>%
+  summarise(
+    mean=mean(mean_samp),
+    sd=sd(mean_samp)
+  )
+
+mean_samp %>% 
+  ggplot() +
+    geom_histogram(aes(x = mean_samp)) +
+    geom_vline(aes(xintercept=mean(mean_samp)),
+            color="blue", linetype="dashed", size=1) + 
+    geom_vline(aes(xintercept=sd(mean_samp)),
+            color="red", linetype="dashed", size=1)  
+
+  
+```
+No, increasing the sample size to 300 has no major change on the SD. 
+
+
