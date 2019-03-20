@@ -1,0 +1,177 @@
+---
+title: "Homework 7"
+author: "Chris Boyd"
+date: "3/18/2019"
+output:
+  html_document:
+    self_contained: true
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(dplyr)
+library(broom)
+```
+
+# Exercise 1
+
+> Load the train.csv dataset into R. How many observations and columns are there?
+
+```{r}
+import_file_path = "../data/train.csv"
+train_data <- read.csv(import_file_path, header = TRUE)
+
+```
+
+There are 1,460 observations and 81 variables.
+
+# Exercise 2
+
+> Visualize the distribution of SalePrice.
+
+```{r}
+train_data %>%
+  ggplot(aes(x = SalePrice)) +
+    geom_histogram()
+```
+
+
+> Visualize the covariation between SalePrice and Neighborhood.
+
+
+```{r}
+
+train_data <- train_data %>% mutate(neighborhood_fct = factor (Neighborhood, ordered=FALSE))
+
+
+train_data %>%
+  ggplot(aes(x =neighborhood_fct , y= SalePrice/1000)) +
+    geom_point() +
+    geom_smooth(method='lm')
+
+
+```
+
+Can't really visualize the covariance since Neighborhood is an unordered categorical variable.
+
+> Visualize the covariation between SalePrice and OverallQual
+
+```{r}
+train_data %>%
+  ggplot(aes(x =OverallQual , y=SalePrice / 1000)) +
+    geom_point() +
+    geom_smooth(method='lm')
+
+
+```
+
+# Exercise 3
+
+> Our target is called SalePrice. First, we can fit a simple regression model consisting of only the intercept (the average of SalePrice). Fit the model and then use the broom package to:
+
+I don't completely understand the question.  Specifically not sure how to fit a simple regression to one variable.  So, I used on OverallQual.
+
+> take a look at the coefficient
+
+```{r}
+(diam_lm <- lm(formula = SalePrice ~ OverallQual, data = train_data))
+
+```
+
+
+```{r, echo = FALSE}
+train_data %>% ggplot(aes(x =OverallQual , y=SalePrice / 1000)) + 
+  geom_point() +
+  geom_hline(aes(yintercept = mean(SalePrice / 1000)))  +
+  theme_bw()
+```
+
+> compare the coefficient to the average value of SalePrice, and
+
+Avg sale price is ~196k, and coefficient is ~45k.
+
+```{r}
+glance(diam_lm)
+```
+
+# Exercise 4
+
+> Now fit a linear regression model using GrLivArea, OverallQual, and Neighborhood as the features. Don’t forget to look at data_description.txt to understand what these variables mean. Ask yourself these questions before fitting the model:
+
+
+```{r}
+diam_mult_lm <- lm(SalePrice ~ GrLivArea + OverallQual + Neighborhood, data = train_data)
+tidy(diam_mult_lm)
+```
+
+> What kind of relationship will these features have with our target?
+
+Greating the living area, the higher the Sale Price.   This will vary by Neighborhood.
+
+```{r}
+diam_mult_lm <- lm(SalePrice ~ GrLivArea + OverallQual + Neighborhood, data = train_data)
+glance(diam_mult_lm)
+```
+
+
+>Can the relationship be estimated linearly?
+
+Yes.
+
+
+> Are these good features, given the problem we are trying to solve?
+
+Yes.
+
+>After fitting the model, output the coefficients and the R-squared using the broom package.  Answer these questions:
+
+> How would you interpret the coefficients on GrLivArea and OverallQual?
+
+For every unit increase in GrLivArea, the price will increase $55, assuming all other features remain constant.  
+
+For every unit increase in OverallQual, price will increase by $21k, assuming all other features remain constant..
+
+
+> How would you interpret the coefficient on NeighborhoodBrkSide?
+
+The NeighborhoodBrkSide is on average $13k less expensive than the other neighborhoods, assuming all other features remain constant.
+
+> Are the features significant?
+
+Yes.
+
+> Are the features practically significant?
+
+Yes.   Tough, not sure what to make of the large std.error on the Neighborhoods.
+
+> Is the model a good fit?
+
+No.  Adjusted R-squared is .78, which not that high.
+
+# Exercise 6
+
+> One downside of the linear model is that it is sensitive to unusual values because the distance incorporates a squared term. Fit a linear model to the simulated data below (use y as the target and x as the feature), and look at the resulting coefficients and R-squared. Rerun it about 5-6 times to generate different simulated datasets. What do you notice about the model’s coefficient on x and the R-squared values?
+
+```{r}
+sim1a <- tibble(
+  x = rep(1:10, each = 3),
+  y = x * 1.5 + 6 + rt(length(x), df = 2)
+)
+
+diam_mult_lm <- lm(y ~ x, data = sim1a)
+glance(diam_mult_lm)
+tidy(diam_mult_lm)
+
+sim1a %>% 
+  ggplot(aes(x =x , y=y)) + 
+    geom_point() 
+       
+
+
+```
+
+The model’s coefficient on x and the R-squared values change pretty signficantly as we re-run.   I've seen a R-squared range between .7 and .9, with some as low as .2.
+
+I've also seen the coefficient on X range between 1.2 and 1.8.
+
+
