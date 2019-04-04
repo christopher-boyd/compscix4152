@@ -1,0 +1,207 @@
+---
+title: "COMPSCIX 415.2 Homework 9/Final"
+author: "Chris Boyd"
+date: "3/31/2019"
+output:
+  html_document:
+    self_contained: true
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(broom)
+```
+
+# Exercise 1
+
+> Sampling Distributions, Functions and For Loops (10 points)
+
+> Function to return calculated mean and standard deviation
+
+```{r}
+
+sample_fun <- function(samp_size, samp_rate) {
+  
+  data <- rexp(n = samp_size, rate = samp_rate)
+  samp_avg = mean(data)
+  samp_std_dev = sd(data) 
+  
+  stats <- list(samp_avg = samp_avg, samp_std_dev = samp_std_dev)
+  return(stats)
+}
+
+```
+
+> Sample size = 50
+
+```{r}
+
+n <- 1000
+
+samp_size = 50
+samp_rate = 1/10000
+
+
+sample_means <- rep(NA, n)
+sample_sds <- rep(NA, n)
+
+for(i in 1:n) {
+    
+  stats <- sample_fun(samp_size, samp_rate)
+  sample_means[i] <- stats$samp_avg 
+  sample_sds[i] <- stats$samp_std_dev
+    
+}
+
+samples <- tibble(sample_means, sample_sds)
+
+ggplot(samples) +
+  geom_histogram(aes(x = sample_means))
+
+sd_of_means <- sd(samples$sample_means)
+
+theoretical_se <- 1/samp_rate / sqrt(samp_size)
+
+mean_of_sds <- mean(samples$sample_sds)
+
+emperical_sd <- mean_of_sds / sqrt(samp_size)
+
+sd_of_means
+theoretical_se
+emperical_sd
+
+```
+
+> Sample size = 5000
+
+```{r}
+
+n <- 1000
+
+samp_size = 5000
+samp_rate = 1/10000
+
+
+sample_means <- rep(NA, n)
+sample_sds <- rep(NA, n)
+
+for(i in 1:n) {
+    
+  stats <- sample_fun(samp_size, samp_rate)
+  sample_means[i] <- stats$samp_avg 
+  sample_sds[i] <- stats$samp_std_dev
+    
+}
+
+samples <- tibble(sample_means, sample_sds)
+
+ggplot(samples) +
+  geom_histogram(aes(x = sample_means))
+
+sd_of_means <- sd(samples$sample_means)
+
+theoretical_se <- 1/samp_rate / sqrt(samp_size)
+
+mean_of_sds <- mean(samples$sample_sds)
+
+emperical_sd <- mean_of_sds / sqrt(samp_size)
+
+sd_of_means
+theoretical_se
+emperical_sd
+
+```
+
+# Exercise 2 - Linear Regression (5 points)
+
+> Use the broom package to output the coefficients and the R-squared
+
+```{r}
+import_file_path = "../data/train.csv"
+train <- read.csv(import_file_path, header = TRUE)
+
+mod_1 <- lm(SalePrice ~ LotArea + OverallQual + ExterQual, data = train)
+
+glance(mod_1)
+tidy(mod_1)
+
+ggplot(train) +
+  geom_point(mapping = aes(x=SalePrice, y=LotArea))
+
+```
+
+`
+
+> Interpret the coefficient on LotArea
+
+For every extra square foot in the LotArea, the sale price increases, on average, by $1.45, with all other features being held constant.  However, there are some pretty major outliers.  If you filter by LotArea < 45000, you get an increase of $4.10 with each increase in sq ft of lotsize.  That data is below.
+
+> Interpret the coefficient on ExterQualGd
+
+The mean difference in the sale price between ExterQualGd and ExterQualEx is -$71k (or -$70k with the LotArea filter.)
+
+
+> Compare this model to the model we fit in HW 7 with GrLivArea, OverallQual, Neighborhood. Which is the better fitting model?
+
+Our HW7 model had an adjusted R-squared of .78, which was a good fit.  This model has an adjusted R-squared of .69 (or .72 with the LotArea filter), which is less of a good fit.   HW7 is a better fitting model. 
+
+# Exercise 3 - AB Testing (5 points)
+
+
+```{r}
+
+### filter out the outliers
+
+train_filtered <- filter(train, LotArea < 45000)
+
+mod_filtered <- lm(SalePrice ~ LotArea + OverallQual + ExterQual, data = train)
+
+glance(mod_filtered)
+tidy(mod_filtered)
+
+```
+
+
+
+```{r}
+import_file_path = "../data/ab_test_data.csv"
+ab_test_data <- read.csv(import_file_path, header = TRUE)
+```
+
+> What proportion of visitors converted for each version of the webpage?
+
+```{r}
+a_total <- filter(ab_test_data, version == 'A')
+a_converted <- filter(a_total, conversion == 1)
+
+b_total <- filter(ab_test_data, version == 'B')
+b_converted <- filter(b_total, conversion == 1)
+
+a_conversion <- count(a_converted) / count(a_total)
+b_conversion <- count(b_converted) / count(b_total)
+
+count(a_total)
+a_conversion
+count(b_total)
+b_conversion
+
+```
+
+```{r}
+
+true_a <- .0415
+true_b <- .1
+n_a <- 2000
+n_b <- 2000
+
+samp_a <- rbinom(n = 1, size = n_a, prob = true_a)
+samp_b <- rbinom(n = 1, size = n_b, prob = true_b)
+
+two_prop_test <- prop.test(c(samp_a, samp_b), c(2000, 2000))
+
+two_prop_test$p.value
+
+
+```
+
+The p-value tells us that the conversion rates for Version A and B are significantly different than each other, so we'd conclude here that whatever changes were made to the did have an effect.
